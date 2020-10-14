@@ -1,4 +1,4 @@
-use crate::{AssetLoader, AssetResult, AssetVersion, HandleId};
+use crate::{AssetStorageResolver, AssetLoader, AssetResult, AssetVersion, HandleId};
 use crossbeam_channel::Sender;
 use std::path::PathBuf;
 
@@ -16,6 +16,7 @@ pub use platform_specific::*;
 #[derive(Debug)]
 pub struct LoadRequest {
     pub path: PathBuf,
+    pub resolver: AssetStorageResolver,
     pub handle_id: HandleId,
     pub handler_index: usize,
     pub version: AssetVersion,

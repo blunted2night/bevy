@@ -1,4 +1,4 @@
-use bevy::{asset::AssetLoader, prelude::*};
+use bevy::{asset::AssetLoader, asset::AssetStorage, prelude::*};
 use ron::de::from_bytes;
 use serde::Deserialize;
 use std::path::Path;
@@ -31,8 +31,8 @@ impl<TAsset> AssetLoader<TAsset> for DataFileLoader
 where
     for<'de> TAsset: Deserialize<'de>,
 {
-    fn from_bytes(&self, _asset_path: &Path, bytes: Vec<u8>) -> Result<TAsset, anyhow::Error> {
-        Ok(from_bytes::<TAsset>(bytes.as_slice())?)
+    fn from_storage(&self, _asset_path: &Path, storage: AssetStorage) -> Result<TAsset, anyhow::Error> {
+        Ok(from_bytes::<TAsset>(storage.as_slice())?)
     }
 
     fn extensions(&self) -> &[&str] {

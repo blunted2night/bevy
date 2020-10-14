@@ -1,6 +1,6 @@
 use crate::{
     filesystem_watcher::FilesystemWatcher, AssetLoadError, AssetLoadRequestHandler, AssetLoader,
-    Assets, Handle, HandleId, LoadRequest,
+    Assets, AssetStorageProvider, Handle, HandleId, LoadRequest, AssetStorageResolver,
 };
 use anyhow::Result;
 use bevy_ecs::{Res, Resource, Resources};
@@ -14,6 +14,8 @@ use std::{
     sync::Arc,
 };
 use thiserror::Error;
+
+use crate::load_request::DefaultStorageProvider;
 
 /// The type used for asset versioning
 pub type AssetVersion = usize;
@@ -65,7 +67,7 @@ impl LoadState {
 
 /// Loads assets from the filesystem on background threads
 pub struct AssetServer {
-    asset_folders: RwLock<Vec<PathBuf>>,
+    asset_storage_resolver: AssetStorageResolver,
     asset_handlers: RwLock<Vec<Arc<dyn AssetLoadRequestHandler>>>,
     loaders: Vec<Resources>,
     task_pool: TaskPool,
@@ -80,7 +82,7 @@ pub struct AssetServer {
 impl AssetServer {
     pub fn new(task_pool: TaskPool) -> Self {
         AssetServer {
-            asset_folders: Default::default(),
+            asset_storage_resolver: AssetStorageResolver::with_provider(DefaultStorageProvider::default ()),
             asset_handlers: Default::default(),
             loaders: Default::default(),
             extension_to_handler_index: Default::default(),
@@ -105,6 +107,13 @@ impl AssetServer {
         }
 
         asset_handlers.push(Arc::new(asset_handler));
+    }
+
+    pub fn add_provider<T>(&mut self, asset_provider: T)
+    where
+        T: AssetStorageProvider
+    {
+        self.asset_storage_resolver.add_provider(asset_provider)
     }
 
     pub fn add_loader<TLoader, TAsset>(&mut self, loader: TLoader)
@@ -172,29 +181,9 @@ impl AssetServer {
         Ok(())
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
-    fn get_root_path(&self) -> Result<PathBuf, AssetServerError> {
-        if let Ok(manifest_dir) = std::env::var("CARGO_MANIFEST_DIR") {
-            Ok(PathBuf::from(manifest_dir))
-        } else {
-            match std::env::current_exe() {
-                Ok(exe_path) => exe_path
-                    .parent()
-                    .ok_or(AssetServerError::InvalidRootPath)
-                    .map(|exe_parent_path| exe_parent_path.to_owned()),
-                Err(err) => Err(AssetServerError::Io(err)),
-            }
-        }
-    }
-
-    #[cfg(target_arch = "wasm32")]
-    fn get_root_path(&self) -> Result<PathBuf, AssetServerError> {
-        Ok(PathBuf::from("/"))
-    }
-
     // TODO: add type checking here. people shouldn't be able to request a Handle<Texture> for a Mesh asset
     pub fn load<T, P: AsRef<Path>>(&self, path: P) -> Result<Handle<T>, AssetServerError> {
-        self.load_untyped(self.get_root_path()?.join(path))
+        self.load_untyped(path)
             .map(Handle::from)
     }
 
@@ -206,7 +195,7 @@ impl AssetServer {
     where
         T: 'static,
     {
-        let path = self.get_root_path()?.join(path);
+        let path = path.as_ref ();
         log::trace!("AssetServer::load_sync(assets=.., path={:?})", path);
         if let Some(ref extension) = path.extension() {
             if let Some(index) = self.extension_to_loader_index.get(
@@ -214,11 +203,13 @@ impl AssetServer {
                     .to_str()
                     .expect("extension should be a valid string"),
             ) {
+                let storage = self.asset_storage_resolver.resolve_sync (&path)?;
+
                 let mut asset_info_paths = self.asset_info_paths.write();
                 let handle_id = HandleId::new();
                 let resources = &self.loaders[*index];
                 let loader = resources.get::<Box<dyn AssetLoader<T>>>().unwrap();
-                let asset = loader.load_from_file(path.as_ref())?;
+                let asset = loader.from_storage(&path, storage).map_err(AssetLoadError::LoaderError)?;
                 let handle = Handle::from(handle_id);
 
                 assets.set(handle, asset);
@@ -275,6 +266,7 @@ impl AssetServer {
                 let load_request = LoadRequest {
                     handle_id,
                     path: path.to_owned(),
+                    resolver: self.asset_storage_resolver.clone (),
                     handler_index: *index,
                     version: new_version,
                 };
@@ -381,6 +373,7 @@ impl AssetServer {
 
 #[cfg(feature = "filesystem_watcher")]
 pub fn filesystem_watcher_system(asset_server: Res<AssetServer>) {
+/*
     let mut changed = HashSet::default();
 
     loop {
@@ -417,4 +410,5 @@ pub fn filesystem_watcher_system(asset_server: Res<AssetServer>) {
             changed.extend(paths);
         }
     }
+*/
 }

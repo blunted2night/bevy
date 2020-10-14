@@ -1,6 +1,6 @@
 use super::{Texture, TextureFormat};
 use anyhow::Result;
-use bevy_asset::AssetLoader;
+use bevy_asset::{AssetLoader,AssetStorage};
 use bevy_math::Vec2;
 use std::path::Path;
 
@@ -11,7 +11,7 @@ use std::path::Path;
 pub struct ImageTextureLoader;
 
 impl AssetLoader<Texture> for ImageTextureLoader {
-    fn from_bytes(&self, asset_path: &Path, bytes: Vec<u8>) -> Result<Texture> {
+    fn from_storage(&self, asset_path: &Path, storage: AssetStorage) -> Result<Texture> {
         use bevy_core::AsBytes;
 
         // Find the image type we expect. A file with the extension "png" should
@@ -36,7 +36,7 @@ impl AssetLoader<Texture> for ImageTextureLoader {
         // needs to be added, so the image data needs to be converted in those
         // cases.
 
-        let dyn_img = image::load_from_memory_with_format(bytes.as_slice(), img_format)?;
+        let dyn_img = image::load_from_memory_with_format(storage.as_slice (), img_format)?;
 
         let width;
         let height;

@@ -1,4 +1,4 @@
-use crate::{AssetServer, AssetVersion, Assets, Handle, LoadState};
+use crate::{AssetServer, AssetStorage, AssetVersion, Assets, Handle, LoadState};
 use anyhow::Result;
 use bevy_ecs::{Res, ResMut, Resource};
 use crossbeam_channel::{Receiver, Sender, TryRecvError};
@@ -21,15 +21,15 @@ pub enum AssetLoadError {
 
 /// A loader for a given asset of type `T`
 pub trait AssetLoader<T>: Send + Sync + 'static {
-    fn from_bytes(&self, asset_path: &Path, bytes: Vec<u8>) -> Result<T, anyhow::Error>;
+    fn from_storage(&self, asset_path: &Path, bytes: AssetStorage<'_>) -> Result<T, anyhow::Error>;
     fn extensions(&self) -> &[&str];
-    fn load_from_file(&self, asset_path: &Path) -> Result<T, AssetLoadError> {
-        let mut file = File::open(asset_path)?;
-        let mut bytes = Vec::new();
-        file.read_to_end(&mut bytes)?;
-        let asset = self.from_bytes(asset_path, bytes)?;
-        Ok(asset)
-    }
+    //fn load_from_file(&self, asset_path: &Path) -> Result<T, AssetLoadError> {
+    //    let mut file = File::open(asset_path)?;
+    //    let mut bytes = Vec::new();
+    //    file.read_to_end(&mut bytes)?;
+    //    let asset = self.from_storage(asset_path, AssetStorage::Boxed(bytes))?;
+    //    Ok(asset)
+    //}
 }
 
 /// The result of loading an asset of type `T`

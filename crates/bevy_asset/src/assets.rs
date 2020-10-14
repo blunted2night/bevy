@@ -7,6 +7,8 @@ use bevy_ecs::{FromResources, IntoQuerySystem, ResMut, Resource};
 use bevy_type_registry::RegisterType;
 use bevy_utils::HashMap;
 
+use crate::AssetStorageProvider;
+
 /// Events that happen on assets of type `T`
 #[derive(Debug)]
 pub enum AssetEvent<T: Resource> {
@@ -147,6 +149,10 @@ pub trait AddAsset {
     where
         TLoader: AssetLoader<TAsset> + FromResources,
         TAsset: Send + Sync + 'static;
+
+    // maybe this belongs in its own trait...
+    fn add_asset_storage_provider<TProvider> (&mut self, provider: TProvider) -> &mut Self
+        where TProvider: AssetStorageProvider;
 }
 
 impl AddAsset for AppBuilder {
@@ -202,5 +208,19 @@ impl AddAsset for AppBuilder {
         self.add_asset_loader_from_instance::<TAsset, TLoader>(TLoader::from_resources(
             self.resources(),
         ))
+    }
+
+    fn add_asset_storage_provider<TProvider> (&mut self, provider: TProvider) -> &mut Self
+        where TProvider: AssetStorageProvider,
+    {
+        {
+            let mut asset_server = self
+                .resources()
+                .get_mut::<AssetServer>()
+                .expect("AssetServer does not exist. Consider adding it as a resource.");
+
+            asset_server.add_provider (provider);
+        }
+        self
     }
 }

@@ -4,7 +4,7 @@ use bevy_render::{
 };
 
 use anyhow::Result;
-use bevy_asset::AssetLoader;
+use bevy_asset::{AssetLoader,AssetStorage};
 use gltf::{buffer::Source, mesh::Mode};
 use std::{fs, io, path::Path};
 use thiserror::Error;
@@ -16,8 +16,8 @@ use thiserror::Error;
 pub struct GltfLoader;
 
 impl AssetLoader<Mesh> for GltfLoader {
-    fn from_bytes(&self, asset_path: &Path, bytes: Vec<u8>) -> Result<Mesh> {
-        let mesh = load_gltf(asset_path, bytes)?;
+    fn from_storage(&self, asset_path: &Path, storage: AssetStorage) -> Result<Mesh> {
+        let mesh = load_gltf(asset_path, storage.into_vec ())?;
         Ok(mesh)
     }
 

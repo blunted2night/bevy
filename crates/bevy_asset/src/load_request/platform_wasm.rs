@@ -1,5 +1,5 @@
 use super::{ChannelAssetHandler, LoadRequest};
-use crate::{AssetLoadError, AssetLoader, AssetResult, Handle};
+use crate::{AssetLoadError, AssetServerError, AssetLoader, AssetResult, Handle};
 use anyhow::Result;
 use async_trait::async_trait;
 use crossbeam_channel::Sender;
@@ -8,6 +8,12 @@ use js_sys::Uint8Array;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::JsFuture;
 use web_sys::Response;
+
+fn default_repository_root_path() -> Result<PathBuf, AssetServerError> {
+    Ok(PathBuf::from("/"))
+}
+
+struct DefaultStorageProvider;
 
 #[async_trait(?Send)]
 pub trait AssetLoadRequestHandler: Send + Sync + 'static {

@@ -2,6 +2,7 @@ mod asset_server;
 mod assets;
 #[cfg(feature = "filesystem_watcher")]
 mod filesystem_watcher;
+mod storage_provider;
 mod handle;
 mod load_request;
 mod loader;
@@ -12,6 +13,12 @@ use bevy_tasks::IoTaskPool;
 pub use handle::*;
 pub use load_request::*;
 pub use loader::*;
+
+pub use storage_provider::{
+    AssetStorage,
+    AssetStorageProvider,
+    AssetStorageResolver,
+};
 
 /// The names of asset stages in an App Schedule
 pub mod stage {

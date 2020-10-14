@@ -1,5 +1,5 @@
 use anyhow::Result;
-use bevy_asset::AssetLoader;
+use bevy_asset::{AssetLoader,AssetStorage};
 use std::{io::Cursor, path::Path, sync::Arc};
 
 /// A source of audio data
@@ -19,9 +19,9 @@ impl AsRef<[u8]> for AudioSource {
 pub struct Mp3Loader;
 
 impl AssetLoader<AudioSource> for Mp3Loader {
-    fn from_bytes(&self, _asset_path: &Path, bytes: Vec<u8>) -> Result<AudioSource> {
+    fn from_storage(&self, _asset_path: &Path, bytes: AssetStorage<'_>) -> Result<AudioSource> {
         Ok(AudioSource {
-            bytes: bytes.into(),
+            bytes: bytes.into_vec().into (),
         })
     }
 

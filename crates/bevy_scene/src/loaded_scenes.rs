@@ -1,6 +1,6 @@
 use crate::{serde::SceneDeserializer, Scene};
 use anyhow::Result;
-use bevy_asset::AssetLoader;
+use bevy_asset::{AssetLoader,AssetStorage};
 use bevy_ecs::{FromResources, Resources};
 use bevy_property::PropertyTypeRegistry;
 use bevy_type_registry::TypeRegistry;
@@ -23,9 +23,9 @@ impl FromResources for SceneLoader {
 }
 
 impl AssetLoader<Scene> for SceneLoader {
-    fn from_bytes(&self, _asset_path: &Path, bytes: Vec<u8>) -> Result<Scene> {
+    fn from_storage(&self, _asset_path: &Path, storage: AssetStorage) -> Result<Scene> {
         let registry = self.property_type_registry.read();
-        let mut deserializer = ron::de::Deserializer::from_bytes(&bytes)?;
+        let mut deserializer = ron::de::Deserializer::from_bytes(storage.as_slice ())?;
         let scene_deserializer = SceneDeserializer {
             property_type_registry: &registry,
         };

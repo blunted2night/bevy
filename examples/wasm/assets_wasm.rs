@@ -1,7 +1,7 @@
 #[cfg(target_arch = "wasm32")]
 extern crate console_error_panic_hook;
 
-use bevy::{asset::AssetLoader, prelude::*};
+use bevy::{asset::{AssetLoader, AssetStorage}, prelude::*};
 use std::path::PathBuf;
 
 fn main() {
@@ -33,12 +33,12 @@ pub struct RustSourceCode(pub String);
 #[derive(Default)]
 pub struct RustSourceCodeLoader;
 impl AssetLoader<RustSourceCode> for RustSourceCodeLoader {
-    fn from_bytes(
+    fn from_storage(
         &self,
         _asset_path: &std::path::Path,
-        bytes: Vec<u8>,
+        storage: AssetStorage,
     ) -> Result<RustSourceCode, anyhow::Error> {
-        Ok(RustSourceCode(String::from_utf8(bytes)?))
+        Ok(RustSourceCode(String::from_utf8(storage.into_vec ())?))
     }
 
     fn extensions(&self) -> &[&str] {
