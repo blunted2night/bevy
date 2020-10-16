@@ -44,6 +44,7 @@ where
     TAsset: Send + 'static,
 {
     async fn handle_request(&self, load_request: &LoadRequest) {
+        log::trace!("ChannelAssetHandler::handle_request(load_request: {{path={:?}}})", load_request.path);
         let result = self.load_asset(load_request);
         let asset_result = AssetResult {
             handle: Handle::from(load_request.handle_id),
@@ -51,6 +52,7 @@ where
             path: load_request.path.clone(),
             version: load_request.version,
         };
+        log::trace!("ChannelAssetHandler::handle_request -> err: {:?}", asset_result.result.as_ref ().err());
         self.sender
             .send(asset_result)
             .expect("loaded asset should have been sent");

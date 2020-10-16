@@ -66,6 +66,7 @@ pub fn update_asset_storage_system<T: Resource>(
         match asset_channel.receiver.try_recv() {
             Ok(result) => match result.result {
                 Ok(asset) => {
+                    log::trace!("asset loaded: {:?}", result.path);
                     assets.set(result.handle, asset);
                     asset_server
                         .set_load_state(result.handle.id, LoadState::Loaded(result.version));

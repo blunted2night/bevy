@@ -206,6 +206,7 @@ impl AssetServer {
         T: 'static,
     {
         let path = self.get_root_path()?.join(path);
+        log::trace!("AssetServer::load_sync(assets=.., path={:?})", path);
         if let Some(ref extension) = path.extension() {
             if let Some(index) = self.extension_to_loader_index.get(
                 extension
@@ -232,6 +233,7 @@ impl AssetServer {
 
     pub fn load_untyped<P: AsRef<Path>>(&self, path: P) -> Result<HandleId, AssetServerError> {
         let path = path.as_ref();
+        log::trace!("AssetServer::load_untyped(path={:?})", path);
         if let Some(ref extension) = path.extension() {
             if let Some(index) = self.extension_to_handler_index.get(
                 extension
@@ -281,6 +283,7 @@ impl AssetServer {
 
                 self.task_pool
                     .spawn(async move {
+                        log::trace!("spawn of AssetServer::load_untyped(path={:?})", load_request.path);
                         request_handler.handle_request(&load_request).await;
                     })
                     .detach();
