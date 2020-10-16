@@ -1,7 +1,18 @@
-use bevy::{asset::AssetLoader, asset::AssetStorage, prelude::*};
+
+use bevy::{
+    prelude::*,
+    asset::{
+        AssetLoader,
+        AssetStorage,
+        AssetLoadError,
+        AssetStorageProvider
+    }
+};
+
 use ron::de::from_bytes;
 use serde::Deserialize;
 use std::path::Path;
+use async_trait::async_trait;
 
 #[derive(Deserialize)]
 pub struct MyCustomData {
@@ -40,11 +51,35 @@ where
     }
 }
 
+// create a custom storage provider for accessing files
+pub struct StaticStorageProvider(&'static [(&'static str, &'static [u8])]);
+
+#[async_trait]
+impl AssetStorageProvider for StaticStorageProvider {
+    fn find_asset_storage_sync<'a> (&'a self, path: &Path)
+        -> std::result::Result<Option<AssetStorage<'a>>, AssetLoadError>
+    {
+        for (entry_path, value) in self.0 {
+            if Path::new(entry_path) == path {
+                return Ok(Some(AssetStorage::Static(value)));
+            }
+        }
+
+        Ok(None)
+    }
+}
+
+const RESOURCES : &'static [(&'static str, &'static [u8])] = &[
+    ("embedded.data1", std::include_bytes!{"embedded.data1"}),
+];
+
 /// This example illustrates various ways to load assets
 fn main() {
+
     App::build()
         .add_default_plugins()
         .add_asset::<MyCustomData>()
+        .add_asset_storage_provider (StaticStorageProvider(RESOURCES))
         .add_asset_loader_from_instance::<MyCustomData, DataFileLoader>(
             DataFileLoader::from_extensions(vec!["data1"]),
         )
@@ -67,10 +102,16 @@ fn setup(
     let data2_handle = asset_server
         .load_sync(&mut data2s, "assets/data/test_data.data2")
         .unwrap();
+    let embedded_data1_handle = asset_server
+        .load_sync(&mut data1s, "embedded.data1")
+        .unwrap();
 
     let data1 = data1s.get(&data1_handle).unwrap();
     println!("Data 1 loaded with value {}", data1.num);
 
     let data2 = data2s.get(&data2_handle).unwrap();
     println!("Data 2 loaded with value {}", data2.is_set);
+
+    let embedded_data1 = data1s.get(&embedded_data1_handle).unwrap();
+    println!("embedded Data 1 loaded with value {}", embedded_data1.num);
 }

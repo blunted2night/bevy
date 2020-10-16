@@ -90,6 +90,7 @@ log = "0.4"
 ron = "0.6"
 anyhow = "1.0"
 env_logger = "*"
+async-trait = "*"
 
 [target.'cfg(target_arch = "wasm32")'.dev-dependencies]
 console_error_panic_hook = "0.1.6"
@@ -174,6 +175,10 @@ path = "examples/asset/asset_loading.rs"
 [[example]]
 name = "custom_loader"
 path = "examples/asset/custom_asset_loading.rs"
+
+[[example]]
+name = "custom_asset_provider"
+path = "examples/asset/custom_asset_provider.rs"
 
 [[example]]
 name = "audio"
