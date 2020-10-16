@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 fn main() {
+    env_logger::init();
     App::build()
         .add_resource(Msaa { samples: 4 })
         .add_default_plugins()
