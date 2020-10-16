@@ -125,13 +125,14 @@ impl AssetServer {
 
     pub fn load_asset_folder<P: AsRef<Path>>(
         &self,
-        path: P,
+        _path: P,
     ) -> Result<Vec<HandleId>, AssetServerError> {
-        let root_path = self.get_root_path()?;
-        let asset_folder = root_path.join(path);
-        let handle_ids = self.load_assets_in_folder_recursive(&asset_folder)?;
-        self.asset_folders.write().push(asset_folder);
-        Ok(handle_ids)
+        //let root_path = self.get_root_path()?;
+        //let asset_folder = root_path.join(path);
+        //let handle_ids = self.load_assets_in_folder_recursive(&asset_folder)?;
+        //self.asset_folders.write().push(asset_folder);
+        //Ok(handle_ids)
+        todo!()
     }
 
     pub fn get_handle<T, P: AsRef<Path>>(&self, path: P) -> Option<Handle<T>> {
@@ -339,6 +340,7 @@ impl AssetServer {
         Some(load_state)
     }
 
+    /*
     fn load_assets_in_folder_recursive(
         &self,
         path: &Path,
@@ -374,6 +376,7 @@ impl AssetServer {
 
         Ok(handle_ids)
     }
+    */
 }
 
 #[cfg(feature = "filesystem_watcher")]
