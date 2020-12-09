@@ -53,7 +53,7 @@ impl Default for AssetServerSettings {
 
 /// Allows replacing the `AssetIo` instance used by the `AssetServer`
 ///
-/// ```
+/// ```ignore
 /// struct CustomAssetLoader;
 /// impl AssetIo for CustomAssetLoader {
 ///   //TODO
