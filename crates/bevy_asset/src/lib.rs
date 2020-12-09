@@ -51,6 +51,35 @@ impl Default for AssetServerSettings {
     }
 }
 
+/// Allows replacing the `AssetIo` instance used by the `AssetServer`
+///
+/// ```
+/// struct CustomAssetLoader;
+/// impl AssetIo for CustomAssetLoader {
+///   //TODO
+/// }
+///
+/// fn setup (app: &AppBuilder) {
+///     app.add_resource (AssetIoFactory(||Box::new(CustomAssetLoader)))
+/// }
+/// ```
+pub struct AssetIoFactory(pub fn(&mut AppBuilder) -> Box<dyn AssetIo>);
+
+fn platform_default_asset_io_factory(app: &mut AppBuilder) -> Box<dyn AssetIo> {
+    let settings = app
+        .resources_mut()
+        .get_or_insert_with(AssetServerSettings::default);
+
+    #[cfg(all(not(target_arch = "wasm32"), not(target_os = "android")))]
+    let source = FileAssetIo::new(&settings.asset_folder);
+    #[cfg(target_arch = "wasm32")]
+    let source = WasmAssetIo::new(&settings.asset_folder);
+    #[cfg(target_os = "android")]
+    let source = AndroidAssetIo::new(&settings.asset_folder);
+
+    Box::new(source)
+}
+
 impl Plugin for AssetPlugin {
     fn build(&self, app: &mut AppBuilder) {
         let task_pool = app
@@ -61,17 +90,12 @@ impl Plugin for AssetPlugin {
             .clone();
 
         let asset_server = {
-            let settings = app
-                .resources_mut()
-                .get_or_insert_with(AssetServerSettings::default);
-
-            #[cfg(all(not(target_arch = "wasm32"), not(target_os = "android")))]
-            let source = FileAssetIo::new(&settings.asset_folder);
-            #[cfg(target_arch = "wasm32")]
-            let source = WasmAssetIo::new(&settings.asset_folder);
-            #[cfg(target_os = "android")]
-            let source = AndroidAssetIo::new(&settings.asset_folder);
-            AssetServer::new(source, task_pool)
+            let factory = app
+                .resources()
+                .get::<AssetIoFactory>()
+                .map(|i| i.0)
+                .unwrap_or(platform_default_asset_io_factory);
+            AssetServer::new(factory(app), task_pool)
         };
 
         app.add_stage_before(
